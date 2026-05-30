@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Win - Referral System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0b1528; color: #f8fafc; }
+        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
+</head>
+<body class="pb-24">
+
+    <div class="max-w-md mx-auto px-4 mt-6 space-y-4">
+        <!-- HEADER STATS -->
+        <div class="glass-card rounded-2xl p-5 text-center space-y-2">
+            <div class="w-12 h-12 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-lg"><i class="fa-solid fa-gift"></i></div>
+            <h2 class="text-base font-extrabold">Invite & Earn Program</h2>
+            <p class="text-[11px] text-slate-400 px-4">Dosto ko invite karein aur har referral par exclusive commission bonus sidhe apne wallet me paayein.</p>
+        </div>
+
+        <!-- DYNAMIC LINK FROM PANEL CONFIG -->
+        <div class="glass-card rounded-2xl p-4 space-y-2.5">
+            <span class="text-[10px] font-bold text-slate-400 tracking-wider block uppercase">Aapki Promotion Invite Link</span>
+            <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex justify-between items-center gap-2">
+                <p id="ref-link-display" class="text-xs text-blue-400 font-bold select-all truncate">Loading link details...</p>
+                <button onclick="copyRefLink()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shrink-0 flex items-center gap-1">
+                    <i class="fa-solid fa-copy"></i> Copy
+                </button>
+            </div>
+        </div>
+
+        <!-- TELEGRAM DEALS PROMO BLOCK -->
+        <div class="glass-card rounded-2xl p-4 border border-indigo-500/10 bg-gradient-to-br from-slate-900 via-[#0f172a] to-indigo-950/40 text-center space-y-2">
+            <p class="text-xs font-semibold text-slate-300">Bade network groups ya promotion deals ke liye humare official handle par sampark karein:</p>
+            <a href="https://t.me/ownerx999" target="_blank" class="inline-flex items-center gap-2 bg-[#229ED9] hover:bg-[#1c8adb] text-white font-bold px-5 py-2 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md">
+                <i class="fa-brands fa-telegram text-sm"></i> @ownerx999
+            </a>
+            <span class="block text-[9px] text-slate-500 font-medium">Contact for business & special promotion bonuses</span>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <div class="fixed bottom-0 left-0 right-0 bg-[#0f172a]/95 border-t border-slate-800 py-3 flex justify-around items-center z-40">
+        <a href="dashboard.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-gamepad text-lg"></i><span>Play</span></a>
+        <a href="deposit.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-circle-plus text-lg"></i><span>Deposit</span></a>
+        <a href="withdraw.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-money-bill-wave text-lg"></i><span>Withdraw</span></a>
+        <a href="referral.html" class="flex flex-col items-center gap-1 text-xs text-blue-500 font-bold"><i class="fa-solid fa-users text-lg"></i><span>Refer</span></a>
+        <a href="account.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-user text-lg"></i><span>Account</span></a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAM0JRKRfrrpZ4FCktKKDXBBau4fvIRXs8",
+            authDomain: "clubb-49319.firebaseapp.com",
+            projectId: "clubb-49319",
+            storageBucket: "clubb-49319.firebasestorage.app",
+            messagingSenderId: "618070372871",
+            appId: "1:618070372871:web:2466f0191f06debb64f0a2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const userId = localStorage.getItem('sw_user_id');
+
+        let appDomain = "https://speedwin.com"; // Fallback static path
+
+        onSnapshot(doc(db, "speed_config", "global"), (snap) => {
+            if(snap.exists() && snap.data().appLink) {
+                appDomain = snap.data().appLink;
+            }
+            // Realtime sync standard system link
+            document.getElementById('ref-link-display').innerText = appDomain + "/index.html?ref=" + (userId ? userId.substring(0,6) : "1001");
+        });
+
+        window.copyRefLink = function() {
+            const txt = document.getElementById('ref-link-display').innerText;
+            navigator.clipboard.writeText(txt);
+            alert("Referral link copied successfully!");
+        };
+    </script>
+</body>
+</html>
+
