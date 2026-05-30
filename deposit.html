@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Win - Deposit Cash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0b1528; color: #f8fafc; }
+        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .toast-notif { transform: translateY(-50px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast-show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body class="pb-24 relative">
+
+    <!-- NOTICE BASE -->
+    <div id="toast-container" class="toast-notif opacity-0 fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-slate-700 px-6 py-3 rounded-xl flex items-center gap-2.5 shadow-2xl pointer-events-none">
+        <span id="toast-icon"></span>
+        <span id="toast-text" class="text-xs font-bold"></span>
+    </div>
+
+    <div class="max-w-md mx-auto px-4 mt-6">
+        <div class="glass-card rounded-2xl p-5 space-y-4">
+            <h2 class="text-sm font-bold flex items-center gap-1.5"><i class="fa-solid fa-wallet text-blue-500"></i> Deposit Cash</h2>
+            
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="setAmt(100)" class="bg-slate-800 hover:bg-slate-700 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition-all">₹100</button>
+                <button onclick="setAmt(500)" class="bg-slate-800 hover:bg-slate-700 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition-all">₹500</button>
+                <button onclick="setAmt(1000)" class="bg-slate-800 hover:bg-slate-700 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition-all">₹1000</button>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 tracking-wider">AMOUNT (₹)</label>
+                <input type="number" id="deposit-amount" placeholder="Kitna amount add karna hai?" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white font-bold focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="bg-blue-600/10 border border-blue-500/20 rounded-xl p-3.5 text-center space-y-1">
+                <span class="text-[9px] font-bold text-blue-400 block tracking-widest uppercase">OFFICIAL UPI ID GATEWAY</span>
+                <p id="gateway-upi" class="text-sm font-black text-amber-400 select-all tracking-wide cursor-pointer">Loading config link...</p>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 tracking-wider">TRANSACTION UTR / REF CODE (12 DIGITS)</label>
+                <input type="text" id="deposit-utr" maxlength="12" placeholder="Payment app se UTR number copy karke yahan dalein" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 font-bold">
+            </div>
+
+            <button onclick="submitDeposit()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md">Submit Deposit Proof</button>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <div class="fixed bottom-0 left-0 right-0 bg-[#0f172a]/95 border-t border-slate-800 py-3 flex justify-around items-center z-40">
+        <a href="dashboard.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-gamepad text-lg"></i><span>Play</span></a>
+        <a href="deposit.html" class="flex flex-col items-center gap-1 text-xs text-blue-500 font-bold"><i class="fa-solid fa-circle-plus text-lg"></i><span>Deposit</span></a>
+        <a href="withdraw.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-money-bill-wave text-lg"></i><span>Withdraw</span></a>
+        <a href="referral.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-users text-lg"></i><span>Refer</span></a>
+        <a href="account.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-user text-lg"></i><span>Account</span></a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAM0JRKRfrrpZ4FCktKKDXBBau4fvIRXs8",
+            authDomain: "clubb-49319.firebaseapp.com",
+            projectId: "clubb-49319",
+            storageBucket: "clubb-49319.firebasestorage.app",
+            messagingSenderId: "618070372871",
+            appId: "1:618070372871:web:2466f0191f06debb64f0a2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const userId = localStorage.getItem('sw_user_id');
+
+        let userProfile = null;
+        window.setAmt = function(val) { document.getElementById('deposit-amount').value = val; };
+
+        window.showNotice = function(msg, isSuccess = false) {
+            const container = document.getElementById('toast-container');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-text');
+            text.innerText = msg;
+            if(isSuccess) {
+                container.className = "toast-notif fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-emerald-950/90 border border-emerald-500 text-emerald-400 px-6 py-3 rounded-xl flex items-center gap-2.5 shadow-2xl pointer-events-auto toast-show";
+                icon.innerHTML = "<i class='fa-solid fa-circle-check text-sm'></i>";
+            } else {
+                container.className = "toast-notif fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-red-950/90 border border-red-500 text-red-400 px-6 py-3 rounded-xl flex items-center gap-2.5 shadow-2xl pointer-events-auto toast-show";
+                icon.innerHTML = "<i class='fa-solid fa-triangle-exclamation text-sm'></i>";
+            }
+            setTimeout(() => { container.classList.remove('toast-show'); }, 3000);
+        };
+
+        onSnapshot(doc(db, "speed_users", userId), (snap) => { if(snap.exists()) userProfile = snap.data(); });
+        
+        onSnapshot(doc(db, "speed_config", "global"), (snap) => {
+            if(snap.exists()) { document.getElementById('gateway-upi').innerText = snap.data().gatewayUPI || "admin@upi"; }
+        });
+
+        window.submitDeposit = async function() {
+            const amt = parseFloat(document.getElementById('deposit-amount').value);
+            const utr = document.getElementById('deposit-utr').value.trim();
+
+            if(isNaN(amt) || amt <= 0) { showNotice("Sahi amount dalein!"); return; }
+            if(utr.length < 12) { showNotice("UTR number pure 12 digits ka hona chahiye!"); return; }
+
+            await addDoc(collection(db, "speed_ledgers"), {
+                userDocId: userId, gmail: userProfile.gmail, uid: userProfile.uid,
+                amount: amt, type: 'DEPOSIT', status: 'PENDING', details: "UTR ID: " + utr, epochTime: Date.now()
+            });
+
+            showNotice("Deposit request received! Balance jald hi active hoga.", true);
+            document.getElementById('deposit-utr').value = '';
+        };
+    </script>
+</body>
+</html>
