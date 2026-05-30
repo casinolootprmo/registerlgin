@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Win - My Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0b1528; color: #f8fafc; }
+        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .toast-notif { transform: translateY(-50px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast-show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body class="pb-24 relative">
+
+    <!-- STANDARD NOTICE -->
+    <div id="toast-container" class="toast-notif opacity-0 fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-slate-700 px-6 py-3 rounded-xl flex items-center gap-2.5 shadow-2xl pointer-events-none">
+        <span id="toast-icon"></span>
+        <span id="toast-text" class="text-xs font-bold"></span>
+    </div>
+
+    <div class="max-w-md mx-auto px-4 mt-6 space-y-4">
+        <!-- USER CARD -->
+        <div class="glass-card rounded-2xl p-4 flex justify-between items-center">
+            <div>
+                <p class="text-[10px] uppercase font-bold text-slate-400">My System ID</p>
+                <h4 id="user-uid" class="text-base font-black text-blue-400 tracking-wider">Loading...</h4>
+                <p id="user-gmail" class="text-xs text-slate-300 mt-0.5">...</p>
+            </div>
+            <button onclick="logout()" class="bg-red-500/20 text-red-400 font-bold px-3 py-1.5 rounded-xl text-xs">Logout</button>
+        </div>
+
+        <!-- REDEEM GIFT CODE BOX -->
+        <div class="glass-card rounded-2xl p-4 flex gap-2 items-center">
+            <div class="flex-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Redeem Gift Code</p>
+                <input type="text" id="gift-code" placeholder="Gift code dalein..." class="w-full bg-slate-900 border border-slate-700 text-xs px-3 py-2.5 rounded-lg text-white focus:outline-none">
+            </div>
+            <button onclick="redeemGift()" class="bg-amber-500 text-slate-950 font-bold px-5 py-2.5 rounded-lg text-xs self-end shadow-md">Claim</button>
+        </div>
+
+        <!-- TRANSACTION RECODS (FIXED SNAPSHOT QUERY) -->
+        <div class="glass-card rounded-2xl p-4 space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Transaction History</h3>
+            <div id="history-box" class="space-y-2 max-h-64 overflow-y-auto text-xs pr-1">
+                <p class="text-slate-500 text-center py-4">Loading history...</p>
+            </div>
+        </div>
+
+        <!-- 24/7 SUPPORT STATION -->
+        <div class="glass-card rounded-2xl p-4 flex flex-col h-64">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><i class="fa-solid fa-comments text-blue-400"></i> Customer Live Support</h3>
+            <div id="chat-box" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 overflow-y-auto space-y-2 text-[11px] font-medium"></div>
+            <div class="mt-2 flex gap-1">
+                <input type="text" id="chat-input" placeholder="Message likhein..." class="w-full bg-slate-900 border border-slate-700 text-xs px-3 py-2.5 rounded-lg text-white focus:outline-none">
+                <button onclick="sendMsg()" class="bg-blue-600 text-white px-4 rounded-lg text-xs"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <div class="fixed bottom-0 left-0 right-0 bg-[#0f172a]/95 border-t border-slate-800 py-3 flex justify-around items-center z-40">
+        <a href="dashboard.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-gamepad text-lg"></i><span>Play</span></a>
+        <a href="deposit.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-circle-plus text-lg"></i><span>Deposit</span></a>
+        <a href="withdraw.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-money-bill-wave text-lg"></i><span>Withdraw</span></a>
+        <a href="referral.html" class="flex flex-col items-center gap-1 text-xs text-slate-400"><i class="fa-solid fa-users text-lg"></i><span>Refer</span></a>
+        <a href="account.html" class="flex flex-col items-center gap-1 text-xs text-blue-500 font-bold"><i class="fa-solid fa-user text-lg"></i><span>Account</span></a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, collection, getDocs, query, where, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAM0JRKRfrrpZ4FCktKKDXBBau4fvIRXs8",
+            authDomain: "clubb-49319.firebaseapp.com",
+            projectId: "clubb-49319",
+            storageBucket: "clubb-49319.firebasestorage.app",
+            messagingSenderId: "618070372871",
+            appId: "1:618070372871:web:2466f0191f06debb64f0a2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const userId = localStorage.getItem('sw_user_id');
+
+        window.logout = function() { localStorage.removeItem('sw_user_id'); window.location.href = "index.html"; };
+
+        window.showNotice = function(msg, isSuccess = false) {
+            const container = document.getElementById('toast-container');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-text');
+            text.innerText = msg;
+            if(isSuccess) {
+                container.className = "toast-notif fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-emerald-950/90 border border-emerald-500 text-emerald-400 px-6 py-3 rounded-xl flex items-center gap-2.5 shadow-2xl pointer-events-auto toast-show";
+                icon.innerHTML = "<i class='fa-solid fa-circle-check text-sm'></i>";
+            } else {
+                container.className = "toast-notif fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-red-950/90 border border-red-500 text-red-400 px-6 py-3 rounded-xl flex items-center gap-2.5 shadow-2xl pointer-events-auto toast-show";
+                icon.innerHTML = "<i class='fa-solid fa-triangle-exclamation text-sm'></i>";
+            }
+            setTimeout(() => { container.classList.remove('toast-show'); }, 3000);
+        };
+
+        let currentProfile = null;
+        onSnapshot(doc(db, "speed_users", userId), (snap) => {
+            if(snap.exists()) {
+                currentProfile = snap.data();
+                document.getElementById('user-uid').innerText = currentProfile.uid;
+                document.getElementById('user-gmail').innerText = currentProfile.gmail;
+            }
+        });
+
+        // FIXED REALTIME HISTORY SYNC
+        onSnapshot(collection(db, "speed_ledgers"), (snap) => {
+            const box = document.getElementById('history-box');
+            box.innerHTML = '';
+            let lists = [];
+            snap.forEach(d => { 
+                if(d.data().userDocId === userId) {
+                    lists.push(d.data());
+                }
+            });
+            lists.sort((a,b) => b.epochTime - a.epochTime);
+            
+            if(lists.length === 0) { box.innerHTML = "<p class='text-slate-500 text-center py-4'>No transactions found.</p>"; return; }
+
+            lists.forEach(t => {
+                const badgeColor = t.status === 'SUCCESS' ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-amber-400 bg-amber-500/10 border border-amber-500/20';
+                const div = document.createElement('div');
+                div.className = "p-3 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center shadow-md";
+                div.innerHTML = `<div>
+                                    <p class='font-bold uppercase tracking-wider text-[11px]'>${t.type}</p>
+                                    <p class='text-[9px] text-slate-500 mt-0.5'>${t.details || ''}</p>
+                                 </div>
+                                 <div class='text-right'>
+                                    <p class='font-black text-white text-xs'>₹${parseFloat(t.amount).toFixed(2)}</p>
+                                    <span class='text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${badgeColor} inline-block mt-1'>${t.status}</span>
+                                 </div>`;
+                box.appendChild(div);
+            });
+        });
+
+        // CHAT SYNC
+        onSnapshot(collection(db, "speed_chats"), (snap) => {
+            const box = document.getElementById('chat-box');
+            box.innerHTML = '';
+            let logs = [];
+            snap.forEach(d => { if(d.data().userDocId === userId) logs.push(d.data()); });
+            logs.sort((a,b) => a.epochTime - b.epochTime);
+
+            logs.forEach(c => {
+                const r = document.createElement('div');
+                r.className = c.sender === 'USER' ? "bg-blue-600 text-white p-2.5 rounded-2xl rounded-tr-none max-w-[80%] ml-auto text-left shadow-sm" : "bg-slate-900 border border-slate-800 p-2.5 rounded-2xl rounded-tl-none max-w-[80%] text-left text-slate-200 shadow-sm";
+                r.innerText = c.text;
+                box.appendChild(r);
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+
+        window.sendMsg = async function() {
+            const t = document.getElementById('chat-input').value.trim();
+            if(!t) return;
+            await addDoc(collection(db, "speed_chats"), { userDocId: userId, sender: 'USER', text: t, epochTime: Date.now() });
+            document.getElementById('chat-input').value = '';
+        };
+
+        window.redeemGift = async function() {
+            const code = document.getElementById('gift-code').value.trim();
+            if(!code) return;
+
+            const q = query(collection(db, "speed_promos"), where("code", "==", code));
+            const snap = await getDocs(q);
+            if(snap.empty) { showNotice("Wrong Code! Dobara check karein."); return; }
+
+            let promoDoc = null;
+            snap.forEach(d => { if(!d.data().claimedBy) promoDoc = d; });
+
+            if(!promoDoc) { showNotice("Code pehle se claim ho chuka hai!"); return; }
+            let prize = parseFloat(promoDoc.data().payoutWorth);
+
+            await updateDoc(doc(db, "speed_users", userId), { balance: currentProfile.balance + prize });
+            await updateDoc(doc(db, "speed_promos", promoDoc.id), { claimedBy: currentProfile.gmail, claimTime: Date.now() });
+
+            showNotice(`Mubarak ho! ₹${prize} add ho gaye.`, true);
+            document.getElementById('gift-code').value = '';
+        };
+
+        // IF REDIRECTED FROM FLOATING BUTTON, AUTO SCROLL TO CHAT
+        if(window.location.search.includes('openChat')) {
+            setTimeout(() => { document.getElementById('chat-input').focus(); }, 600);
+        }
+    </script>
+</body>
+</html>
+
